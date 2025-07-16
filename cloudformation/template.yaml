@@ -10,14 +10,14 @@ Parameters:
     Description: Environment for deployment (beta or prod)
 
   LambdaCodeBucket:
-    Default: acmelabs-lambdas
     Type: String
+    Default: acmelabs-lambdas
     Description: The S3 bucket where Lambda function code is stored
 
   AudioBucketName:
     Type: String
-    Default: !Sub "acmelabs-speakeasy-${Environment}"
-    Description: The name of the audio S3 bucket
+    Default: acmelabs-speakeasy
+    Description: The name of the audio S3 bucket (e.g., acmelabs-speakeasy-${Environment})
 
   S3KeyPrefix:
     Type: String
@@ -68,7 +68,7 @@ Resources:
   AudioBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Ref AudioBucketName  # Use parameter for bucket name
+      BucketName: !Sub "${AudioBucketName}-${Environment}"
       LifecycleConfiguration:
         Rules:
           - Id: ExpireOldOutputs
@@ -250,3 +250,7 @@ Outputs:
   LambdaExecutionRoleArn:
     Value: !GetAtt LambdaExecutionRole.Arn
     Description: ARN of the Lambda execution role
+
+  LambdaCodeBucketName:
+    Value: !Ref LambdaCodeBucket
+    Description: Name of the S3 bucket where Lambda function code is stored
