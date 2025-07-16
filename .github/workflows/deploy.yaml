@@ -33,7 +33,11 @@ jobs:
             echo "exists=true" >> $GITHUB_ENV
           else
             echo "Bucket does not exist. Creating bucket."
-            aws s3api create-bucket --bucket $BUCKET_NAME --region ${{ secrets.AWS_REGION }} --create-bucket-configuration LocationConstraint=${{ secrets.AWS_REGION }}
+            if [ "${{ secrets.AWS_REGION }}" == "us-east-1" ]; then
+              aws s3api create-bucket --bucket $BUCKET_NAME --region ${{ secrets.AWS_REGION }}
+            else
+              aws s3api create-bucket --bucket $BUCKET_NAME --region ${{ secrets.AWS_REGION }} --create-bucket-configuration LocationConstraint=${{ secrets.AWS_REGION }}
+            fi
             echo "exists=false" >> $GITHUB_ENV
           fi
         env:
