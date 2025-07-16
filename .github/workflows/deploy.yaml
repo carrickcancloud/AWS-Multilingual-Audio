@@ -1,0 +1,74 @@
+name: Deploy Infrastructure
+
+on:
+  push:
+    branches:
+      - main
+      - beta
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.2.0
+
+      - name: Set Deployment Flag
+        run: |
+          # To deploy resources, set it to true (First run or stack updates.)
+          # To upload audio, set it to false
+          echo "DEPLOY_RESOURCES=true" >> $GITHUB_ENV
+
+      - name: Set up Python
+        uses: actions/setup-python@v5.6.0
+        with:
+          python-version: '3.13.5'
+
+      - name: Check if S3 bucket exists
+        id: check_bucket
+        run: |
+          BUCKET_NAME=${{ secrets.S3_BUCKET_LAMBDAS }}
+          if aws s3api head-bucket --bucket $BUCKET_NAME 2>/dev/null; then
+            echo "Bucket exists."
+            echo "exists=true" >> $GITHUB_ENV
+          else
+            echo "Bucket does not exist. Creating bucket."
+            aws s3api create-bucket --bucket $BUCKET_NAME --region ${{ secrets.AWS_REGION }} --create-bucket-configuration LocationConstraint=${{ secrets.AWS_REGION }}
+            echo "exists=false" >> $GITHUB_ENV
+          fi
+
+      - name: Package Lambda functions
+        run: |
+          cd lambda
+          zip -r transcribe.zip transcribe.py
+          zip -r translate.zip translate.py
+          zip -r synthesize.zip synthesize.py
+
+      - name: Upload Lambda packages to S3
+        run: |
+          BUCKET_NAME=${{ secrets.S3_BUCKET_LAMBDAS }}
+          APPNAME_AS_PREFIX="speakeasy/"
+          # Uploading files to the S3 bucket
+          for file in lambda/*.zip; do
+            aws s3 cp "$file" s3://$BUCKET_NAME/$APPNAME_AS_PREFIX
+          done
+          echo "Uploaded all Lambda packages to s3://$BUCKET_NAME/$APPNAME_AS_PREFIX"
+
+      - name: Deploy CloudFormation
+        if: env.DEPLOY_RESOURCES == 'true'
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/beta" ]; then
+            ENVIRONMENT="beta"
+          else
+            ENVIRONMENT="prod"
+          fi
+
+          aws cloudformation deploy \
+            --template-file cloudformation/template.yaml \
+            --stack-name acmelabs-speakeasy \
+            --parameter-overrides Environment=$ENVIRONMENT \
+            --capabilities CAPABILITY_NAMED_IAM
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
