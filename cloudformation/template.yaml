@@ -96,11 +96,11 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
         S3Bucket: !Ref LambdaCodeBucket
-        S3Key: !Sub "${TranscribeFunctionS3Key"
+        S3Key: !Ref TranscribeFunctionS3Key
       Runtime: python3.13
       Environment:
         Variables:
-          S3_BUCKET: !Ref AudioBucket
+          S3_BUCKET: !Sub ${AudioBucket}-${Environment}
       Tags:
         - Key: Name
           Value: !Sub "${TranscribeFunctionName}-${Environment}"
@@ -113,11 +113,11 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
         S3Bucket: !Ref LambdaCodeBucket
-        S3Key: !Sub "${TranslateFunctionS3Key"
+        S3Key: !Ref TranslateFunctionS3Key
       Runtime: python3.13
       Environment:
         Variables:
-          S3_BUCKET: !Ref AudioBucket
+          S3_BUCKET: !Sub ${AudioBucket}-${Environment}
           TARGET_LANGUAGE: 'es'
       Tags:
         - Key: Name
@@ -131,11 +131,11 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
         S3Bucket: !Ref LambdaCodeBucket
-        S3Key: !Sub "${SynthesizeFunctionS3Key"
+        S3Key: !Ref SynthesizeFunctionS3Key
       Runtime: python3.13
       Environment:
         Variables:
-          S3_BUCKET: !Ref AudioBucket
+          S3_BUCKET: !Sub ${AudioBucket}-${Environment}
       Tags:
         - Key: Name
           Value: !Sub "${SynthesizeFunctionName}-${Environment}"
