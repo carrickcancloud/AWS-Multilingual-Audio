@@ -19,11 +19,6 @@ Parameters:
     Default: acmelabs-speakeasy
     Description: The name of the audio S3 bucket (e.g., acmelabs-speakeasy-${Environment})
 
-  S3KeyPrefix:
-    Type: String
-    Default: speakeasy/
-    Description: The prefix for the Lambda function code files in the S3 bucket
-
   TranscribeFunctionName:
     Type: String
     Default: acmelabs-speakeasy-transcribe
@@ -38,6 +33,21 @@ Parameters:
     Type: String
     Default: acmelabs-speakeasy-synthesize
     Description: The name of the Synthesize Lambda function
+
+  TranscribeFunctionS3Key:
+    Type: String
+    Default: speakeasy/transcribe.zip
+    Description: The prefix for the Lambda function code files in the S3 bucket
+
+  TranslateFunctionS3Key:
+    Type: String
+    Default: speakeasy/translate.zip
+    Description: The prefix for the Lambda function code files in the S3 bucket
+
+  SynthesizeFunctionS3Key:
+    Type: String
+    Default: speakeasy/synthesize.zip
+    Description: The prefix for the Lambda function code files in the S3 bucket
 
   StepFunctionsRoleName:
     Type: String
@@ -86,7 +96,7 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
         S3Bucket: !Ref LambdaCodeBucket
-        S3Key: !Sub "${S3KeyPrefix}code/transcribe.zip"
+        S3Key: !Sub "${TranscribeFunctionS3Key"
       Runtime: python3.13
       Environment:
         Variables:
@@ -103,7 +113,7 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
         S3Bucket: !Ref LambdaCodeBucket
-        S3Key: !Sub "${S3KeyPrefix}code/translate.zip"
+        S3Key: !Sub "${TranslateFunctionS3Key"
       Runtime: python3.13
       Environment:
         Variables:
@@ -121,7 +131,7 @@ Resources:
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
         S3Bucket: !Ref LambdaCodeBucket
-        S3Key: !Sub "${S3KeyPrefix}code/synthesize.zip"
+        S3Key: !Sub "${SynthesizeFunctionS3Key"
       Runtime: python3.13
       Environment:
         Variables:
