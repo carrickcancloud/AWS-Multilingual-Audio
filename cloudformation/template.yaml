@@ -1,0 +1,197 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: AcmeLabs SpeakEasy - Multilingual Audio Processing Pipeline
+
+Parameters:
+  Environment:
+    Type: String
+    AllowedValues:
+      - beta
+      - prod
+    Description: Environment for deployment (beta or prod)
+
+Resources:
+  AudioBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: acmelabs-speakeasy-${Environment}
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireOldOutputs
+            Status: Enabled
+            ExpirationInDays: 30
+      Tags:
+        - Key: Name
+          Value: acmelabs-speakeasy-bucket
+
+  TranscribeFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: acmelabs-speakeasy-transcribe-${Environment}
+      Handler: transcribe.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref AudioBucket
+        S3Key: code/transcribe.zip
+      Runtime: python3.13
+      Environment:
+        Variables:
+          S3_BUCKET: !Ref AudioBucket
+      Tags:
+        - Key: Name
+          Value: acmelabs-speakeasy-transcribe-${Environment}
+
+  TranslateFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: acmelabs-speakeasy-translate-${Environment}
+      Handler: translate.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref AudioBucket
+        S3Key: code/translate.zip
+      Runtime: python3.13
+      Environment:
+        Variables:
+          S3_BUCKET: !Ref AudioBucket
+          TARGET_LANGUAGE: 'es'  # Example: Spanish
+      Tags:
+        - Key: Name
+          Value: acmelabs-speakeasy-translate-${Environment}
+
+  SynthesizeFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: acmelabs-speakeasy-synthesize-${Environment}
+      Handler: synthesize.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref AudioBucket
+        S3Key: code/synthesize.zip
+      Runtime: python3.13
+      Environment:
+        Variables:
+          S3_BUCKET: !Ref AudioBucket
+      Tags:
+        - Key: Name
+          Value: acmelabs-speakeasy-synthesize-${Environment}
+
+  AudioProcessingStateMachine:
+    Type: AWS::StepFunctions::StateMachine
+    Properties:
+      Definition:
+        Comment: "Audio Processing State Machine"
+        StartAt: "TranscribeAudio"
+        States:
+          TranscribeAudio:
+            Type: Task
+            Resource: !Sub "${TranscribeFunction.Arn}"
+            Next: "TranslateText"
+          TranslateText:
+            Type: Task
+            Resource: !Sub "${TranslateFunction.Arn}"
+            Next: "SynthesizeSpeech"
+          SynthesizeSpeech:
+            Type: Task
+            Resource: !Sub "${SynthesizeFunction.Arn}"
+            End: true
+      RoleArn: !GetAtt StepFunctionsRole.Arn
+      Tags:
+        - Key: Name
+          Value: acmelabs-speakeasy-state-machine-${Environment}
+
+  StepFunctionsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: acmelabs-speakeasy-step-functions-role-${Environment}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: states.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: StepFunctionsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - lambda:InvokeFunction
+                Resource:
+                  - !GetAtt TranscribeFunction.Arn
+                  - !GetAtt TranslateFunction.Arn
+                  - !GetAtt SynthesizeFunction.Arn
+      Tags:
+        - Key: Name
+          Value: acmelabs-speakeasy-step-functions-role
+
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: acmelabs-speakeasy-lambda-execution-role-${Environment}
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: AudioProcessingPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:GetObject
+                  - s3:ListBucket
+                  - transcribe:StartTranscriptionJob
+                  - transcribe:GetTranscriptionJob
+                  - translate:TranslateText
+                  - polly:SynthesizeSpeech
+                Resource:
+                  - !Sub 'arn:aws:s3:::${AudioBucket}/*'
+                  - !Sub 'arn:aws:s3:::${AudioBucket}'
+                  - '*'
+      Tags:
+        - Key: Name
+          Value: acmelabs-speakeasy-lambda-execution-role
+
+  S3Trigger:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref TranscribeFunction
+      Principal: s3.amazonaws.com
+      SourceArn: !Sub 'arn:aws:s3:::${AudioBucket}'
+
+Outputs:
+  AudioBucketName:
+    Value: !Ref AudioBucket
+    Description: Name of the audio S3 bucket
+
+  TranscribeFunctionArn:
+    Value: !GetAtt TranscribeFunction.Arn
+    Description: ARN of the Transcribe Lambda function
+
+  TranslateFunctionArn:
+    Value: !GetAtt TranslateFunction.Arn
+    Description: ARN of the Translate Lambda function
+
+  SynthesizeFunctionArn:
+    Value: !GetAtt SynthesizeFunction.Arn
+    Description: ARN of the Synthesize Lambda function
+
+  StateMachineArn:
+    Value: !GetAtt AudioProcessingStateMachine.Arn
+    Description: ARN of the audio processing Step Functions state machine
+
+  StepFunctionsRoleArn:
+    Value: !GetAtt StepFunctionsRole.Arn
+    Description: ARN of the Step Functions role
+
+  LambdaExecutionRoleArn:
+    Value: !GetAtt LambdaExecutionRole.Arn
+    Description: ARN of the Lambda execution role

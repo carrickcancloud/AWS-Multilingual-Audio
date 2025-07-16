@@ -1,0 +1,40 @@
+name: Upload Audio
+
+on:
+  push:
+    branches:
+      - main
+      - beta
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4.2.0
+
+      - name: Set Bucket Name
+        id: set_bucket_name
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/beta" ]; then
+            echo "BUCKET_NAME=${{ secrets.S3_BUCKET_BETA }}" >> $GITHUB_ENV
+            echo "Deploying to beta environment."
+          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "BUCKET_NAME=${{ secrets.S3_BUCKET_PROD }}" >> $GITHUB_ENV
+            echo "Deploying to production environment."
+          else
+            echo "Error: This workflow only supports deployments to beta or main branches."
+            exit 1
+          fi
+
+      - name: Upload audio files to S3
+        run: |
+          BUCKET_NAME=${{ env.BUCKET_NAME }}
+          PREFIX="audio_inputs/"
+          # Uploading only .mp3 files to the S3 bucket
+          aws s3 sync audio_inputs/ s3://$BUCKET_NAME/$APPNAME_AS_PREFIX --exclude "*" --include "*.mp3"
+          echo "Uploaded all .mp3 audio packages to s3://$BUCKET_NAME/$APPNAME_AS_PREFIX"
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
