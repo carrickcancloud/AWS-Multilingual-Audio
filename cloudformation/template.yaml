@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: AcmeLabs SpeakEasy Audio Processing with S3, Lambda, and Step Functions
+Description: AcmeLabs SpeakEasy Audio Processing
 
 Parameters:
   Environment:
