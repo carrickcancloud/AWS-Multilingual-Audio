@@ -1,0 +1,43 @@
+name: Undeploy Infrastructure
+
+on:
+  workflow_dispatch:  # Enable manual trigger
+    inputs:
+      environment:
+        description: 'Select environment to undeploy'
+        required: true
+        default: 'beta'
+        options:
+          - beta
+          - prod
+
+jobs:
+  undeploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if CloudFormation stack exists
+        id: check_stack
+        run: |
+          STACK_NAME="AcmeLabsSpeakEasy-${{ github.event.inputs.environment }}"
+          if aws cloudformation describe-stacks --stack-name $STACK_NAME 2>/dev/null; then
+            echo "Stack $STACK_NAME exists. Proceeding to deletion."
+            echo "DEPLOY_STACK=true" >> $GITHUB_ENV
+          else
+            echo "Stack $STACK_NAME does not exist. Skipping deletion."
+            echo "DEPLOY_STACK=false" >> $GITHUB_ENV
+          fi
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+
+      - name: Delete CloudFormation stack
+        if: env.DEPLOY_STACK == 'true'
+        run: |
+          STACK_NAME="AcmeLabsSpeakEasy-${{ github.event.inputs.environment }}"
+          aws cloudformation delete-stack --stack-name $STACK_NAME
+          echo "Stack $STACK_NAME is being deleted."
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}

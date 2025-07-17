@@ -1,10 +1,22 @@
 name: Deploy Infrastructure
 
 on:
-  push:
-    branches:
-      - main
-      - beta
+  workflow_dispatch:  # Enable manual trigger
+    inputs:
+      action:
+        description: 'Select action to perform'
+        required: true
+        default: 'initial_deploy'
+        options:
+          - initial_deploy
+          - update
+      environment:
+        description: 'Select environment to deploy'
+        required: true
+        default: 'beta'
+        options:
+          - beta
+          - prod
 
 jobs:
   deploy:
@@ -66,34 +78,41 @@ jobs:
       - name: Check if CloudFormation stack exists
         id: check_stack
         run: |
-          STACK_NAME="AcmeLabsSpeakEasy"
+          STACK_NAME="AcmeLabsSpeakEasy-${{ github.event.inputs.environment }}"
+          echo "STACK_NAME=$STACK_NAME" >> $GITHUB_ENV  # Export STACK_NAME as an environment variable
           if aws cloudformation describe-stacks --stack-name $STACK_NAME 2>/dev/null; then
-            echo "Stack $STACK_NAME exists. Skipping deployment."
-            echo "DEPLOY_STACK=false" >> $GITHUB_ENV
-          else
-            echo "Stack $STACK_NAME does not exist. Proceeding to deployment."
+            echo "Stack $STACK_NAME exists."
             echo "DEPLOY_STACK=true" >> $GITHUB_ENV
-          fi
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-
-      - name: Deploy CloudFormation
-        if: env.DEPLOY_STACK == 'true' && env.DEPLOY_RESOURCES == 'true'
-        run: |
-          if [ "${{ github.ref }}" == "refs/heads/beta" ]; then
-            ENVIRONMENT="beta"
           else
-            ENVIRONMENT="prod"
+            echo "Stack $STACK_NAME does not exist."
+            echo "DEPLOY_STACK=false" >> $GITHUB_ENV
           fi
-
-          aws cloudformation deploy \
-            --template-file cloudformation/template.yaml \
-            --stack-name AcmeLabsSpeakEasy \
-            --parameter-overrides Environment=$ENVIRONMENT \
-            --capabilities CAPABILITY_NAMED_IAM
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
+
+      - name: Deploy or Update CloudFormation
+        run: |
+          ENVIRONMENT="${{ github.event.inputs.environment }}"
+
+          if [ "${{ github.event.inputs.action }}" == "initial_deploy" ]; then
+            echo "Creating CloudFormation stack..."
+            aws cloudformation create-stack \
+              --template-file cloudformation/template.yaml \
+              --stack-name $STACK_NAME \
+              --parameter-overrides Environment=$ENVIRONMENT \
+              --capabilities CAPABILITY_NAMED_IAM
+          elif [ "${{ github.event.inputs.action }}" == "update" ]; then
+            echo "Updating CloudFormation stack..."
+            aws cloudformation update-stack \
+              --template-file cloudformation/template.yaml \
+              --stack-name $STACK_NAME \
+              --parameter-overrides Environment=$ENVIRONMENT \
+              --capabilities CAPABILITY_NAMED_IAM
+          fi
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          STACK_NAME: ${{ env.STACK_NAME }}
