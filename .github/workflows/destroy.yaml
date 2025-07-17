@@ -1,4 +1,4 @@
-name: Undeploy Infrastructure
+name: Destroy Infrastructure
 
 on:
   workflow_dispatch:  # Enable manual trigger
