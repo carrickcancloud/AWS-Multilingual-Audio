@@ -92,27 +92,27 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
 
-      - name: Deploy or Update CloudFormation
-        run: |
-          ENVIRONMENT="${{ github.event.inputs.environment }}"
+- name: Deploy or Update CloudFormation
+  run: |
+    ENVIRONMENT="${{ github.event.inputs.environment }}"
 
-          if [ "${{ github.event.inputs.action }}" == "initial_deploy" ]; then
-            echo "Creating CloudFormation stack..."
-            aws cloudformation create-stack \
-              --template-file cloudformation/template.yaml \
-              --stack-name $STACK_NAME \
-              --parameter-overrides Environment=$ENVIRONMENT \
-              --capabilities CAPABILITY_NAMED_IAM
-          elif [ "${{ github.event.inputs.action }}" == "update" ]; then
-            echo "Updating CloudFormation stack..."
-            aws cloudformation update-stack \
-              --template-file cloudformation/template.yaml \
-              --stack-name $STACK_NAME \
-              --parameter-overrides Environment=$ENVIRONMENT \
-              --capabilities CAPABILITY_NAMED_IAM
-          fi
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          STACK_NAME: ${{ env.STACK_NAME }}
+    if [ "${{ github.event.inputs.action }}" == "initial_deploy" ]; then
+      echo "Creating CloudFormation stack..."
+      aws cloudformation create-stack \
+        --stack-name "$STACK_NAME" \
+        --template-body file://cloudformation/template.yaml \
+        --parameters ParameterKey=Environment,ParameterValue="$ENVIRONMENT" \
+        --capabilities CAPABILITY_NAMED_IAM
+    elif [ "${{ github.event.inputs.action }}" == "update" ]; then
+      echo "Updating CloudFormation stack..."
+      aws cloudformation update-stack \
+        --stack-name "$STACK_NAME" \
+        --template-body file://cloudformation/template.yaml \
+        --parameters ParameterKey=Environment,ParameterValue="$ENVIRONMENT" \
+        --capabilities CAPABILITY_NAMED_IAM
+    fi
+  env:
+    AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+    AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+    AWS_REGION: ${{ secrets.AWS_REGION }}
+    STACK_NAME: ${{ env.STACK_NAME }}
