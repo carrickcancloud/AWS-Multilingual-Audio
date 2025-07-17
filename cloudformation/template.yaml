@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: AcmeLabs SpeakEasy - Multilingual Audio Processing Pipeline
+Description: AcmeLabs SpeakEasy
 
 Parameters:
   Environment:
