@@ -49,6 +49,11 @@ Parameters:
     Default: speakeasy/synthesize.zip
     Description: The prefix for the Lambda function code files in the S3 bucket
 
+  AudioProcessingStateMachineName:
+    Type: String
+    Default: acmelabs-speakeasy-audio-processing-state-machine
+    Description: The name of the Audio Processing Step Functions state machine
+
   StepFunctionsRoleName:
     Type: String
     Default: acmelabs-speakeasy-step-functions-role
@@ -160,9 +165,10 @@ Resources:
             Resource: !Sub "${SynthesizeFunction.Arn}"
             End: true
       RoleArn: !GetAtt StepFunctionsRole.Arn
+      Name: !Sub "${AudioProcessingStateMachineName}-${Environment}"
       Tags:
         - Key: Name
-          Value: !Sub "${StepFunctionsRoleName}-${Environment}"
+          Value: !Sub "${AudioProcessingStateMachineName}-${Environment}"
 
   StepFunctionsRole:
     Type: AWS::IAM::Role
