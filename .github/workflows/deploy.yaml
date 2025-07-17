@@ -1,4 +1,4 @@
-name: Deploy Infrastructure
+name: Deploy Resources
 
 on:
   workflow_dispatch:  # Enable manual trigger
