@@ -223,9 +223,8 @@ Resources:
                   - translate:TranslateText
                   - polly:SynthesizeSpeech
                 Resource:
-                  - !Sub 'arn:aws:s3:::${AudioBucket}/*'
+                  - !Sub 'arn:aws:s3:::${AudioBucket}/audio_inputs/*'
                   - !Sub 'arn:aws:s3:::${AudioBucket}'
-                  - '*'
       Tags:
         - Key: Name
           Value: !Sub "${LambdaExecutionRoleName}-${Environment}"
