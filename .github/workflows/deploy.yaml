@@ -1,7 +1,7 @@
 name: Deploy Resources
 
 on:
-  workflow_dispatch:  # Enable manual trigger
+  workflow_dispatch:
     inputs:
       action:
         description: 'Select action to perform: deploy or update. Deploy will create a new stack, while update will modify an existing stack.'
@@ -94,7 +94,7 @@ jobs:
         run: |
           ENVIRONMENT="${{ github.event.inputs.environment }}"
       
-          if [ "${{ github.event.inputs.action }}" == "initial_deploy" ]; then
+          if [ "${{ github.event.inputs.action }}" == "deploy" ]; then
             echo "Creating CloudFormation stack..."
             aws cloudformation create-stack \
               --stack-name "$STACK_NAME" \
