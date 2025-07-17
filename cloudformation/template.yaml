@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: AcmeLabs SpeakEasy
+Description: AcmeLabs SpeakEasy Audio Processing with S3, Lambda, and Step Functions
 
 Parameters:
   Environment:
@@ -165,7 +165,7 @@ Resources:
             Resource: !Sub "${SynthesizeFunction.Arn}"
             End: true
       RoleArn: !GetAtt StepFunctionsRole.Arn
-      Name: !Sub "${AudioProcessingStateMachineName}-${Environment}"
+      StateMachineName: !Sub "${AudioProcessingStateMachineName}-${Environment}"
       Tags:
         - Key: Name
           Value: !Sub "${AudioProcessingStateMachineName}-${Environment}"
