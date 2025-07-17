@@ -4,16 +4,14 @@ on:
   workflow_dispatch:  # Enable manual trigger
     inputs:
       action:
-        description: 'Select action to perform'
+        description: 'Select action to perform: deploy or update. Deploy will create a new stack, while update will modify an existing stack.'
         required: true
-        default: 'initial_deploy'
         options:
-          - initial_deploy
+          - deploy
           - update
       environment:
-        description: 'Select environment to deploy'
+        description: 'Select environment to deploy: beta or prod.'
         required: true
-        default: 'beta'
         options:
           - beta
           - prod
