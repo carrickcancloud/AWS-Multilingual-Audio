@@ -105,7 +105,7 @@ Resources:
       Runtime: python3.13
       Environment:
         Variables:
-          S3_BUCKET: !Sub ${AudioBucket}-${Environment}
+          S3_BUCKET: !Sub ${AudioBucketName}-${Environment}
       Tags:
         - Key: Name
           Value: !Sub "${TranscribeFunctionName}-${Environment}"
@@ -122,7 +122,7 @@ Resources:
       Runtime: python3.13
       Environment:
         Variables:
-          S3_BUCKET: !Sub ${AudioBucket}-${Environment}
+          S3_BUCKET: !Sub ${AudioBucketName}-${Environment}
           TARGET_LANGUAGE: 'es'
       Tags:
         - Key: Name
@@ -140,7 +140,7 @@ Resources:
       Runtime: python3.13
       Environment:
         Variables:
-          S3_BUCKET: !Sub ${AudioBucket}-${Environment}
+          S3_BUCKET: !Sub ${AudioBucketName}-${Environment}
       Tags:
         - Key: Name
           Value: !Sub "${SynthesizeFunctionName}-${Environment}"
