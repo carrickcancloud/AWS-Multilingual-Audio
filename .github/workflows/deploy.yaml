@@ -102,7 +102,7 @@ jobs:
               --stack-name "$STACK_NAME" \
               --template-body file://cloudformation/template.yaml \
               --parameters ParameterKey=Environment,ParameterValue="$ENVIRONMENT" \
-              --capabilities CAPABILITY_NAMED_IAM
+              --capabilities CAPABILITY_NAMED_IAM \
               --tags Key=Name,Value="$STACK_NAME"
             
             # Wait for the stack creation to complete
@@ -113,7 +113,7 @@ jobs:
               --stack-name "$STACK_NAME" \
               --template-body file://cloudformation/template.yaml \
               --parameters ParameterKey=Environment,ParameterValue="$ENVIRONMENT" \
-              --capabilities CAPABILITY_NAMED_IAM
+              --capabilities CAPABILITY_NAMED_IAM \
               --tags Key=Name,Value="$STACK_NAME"
             
             # Wait for the stack update to complete
