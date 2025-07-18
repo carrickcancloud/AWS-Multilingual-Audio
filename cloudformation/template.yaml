@@ -173,7 +173,7 @@ Resources:
         Level: ALL
         Destinations:
           - CloudWatchLogsLogGroup:
-              LogGroupArn: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/vendedlogs/states/${AudioProcessingStateMachineName}-${Environment}"
+              LogGroupArn: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/vendedlogs/states/${AudioProcessingStateMachineName}-${Environment}/*"
 
   StepFunctionsRole:
     Type: AWS::IAM::Role
