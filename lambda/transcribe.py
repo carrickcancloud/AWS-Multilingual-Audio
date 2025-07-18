@@ -9,11 +9,10 @@ logger.setLevel(logging.INFO)
 s3 = boto3.client('s3')
 transcribe = boto3.client('transcribe')
 
-
 def lambda_handler(event, context):
+    logger.info("Transcribe function invoked")
     bucket = event['bucket']
     key = event['key']
-
     job_name = key.split('.')[0]
 
     try:
@@ -25,11 +24,8 @@ def lambda_handler(event, context):
             LanguageCode='en-US'
         )
 
-        # Wait for transcription to complete (simplified for example)
-        # Implement a wait or check mechanism here.
-
         transcript_uri = f's3://{bucket}/transcripts/{job_name}.txt'
-        logger.info(f"Transcription job completed: {transcript_uri}")
+        logger.info(f"Transcription job started: {transcript_uri}")
         return {'transcript_uri': transcript_uri}
 
     except ClientError as e:
