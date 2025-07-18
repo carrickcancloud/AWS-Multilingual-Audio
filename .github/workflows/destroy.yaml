@@ -22,8 +22,8 @@ jobs:
           TAG_NAME="AcmeLabsSpeakEasy-${{ github.event.inputs.environment }}"
           
           # List stacks and filter by tag
-          STACK_NAME=$(aws cloudformation list-stacks --query "StackSummaries[?contains(Tags[*].Key, 'Name') && contains(Tags[*].Value, '$TAG_NAME')].StackName" --output text)
-
+          STACK_NAME=$(aws cloudformation list-stacks --query "StackSummaries[?Tags[?Key=='Name' && Value=='$TAG_NAME']].StackName" --output text)
+      
           if [ -n "$STACK_NAME" ]; then
             echo "Stack $STACK_NAME exists. Proceeding to deletion."
             echo "DEPLOY_STACK=true" >> $GITHUB_ENV
