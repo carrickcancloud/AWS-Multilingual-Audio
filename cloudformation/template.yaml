@@ -169,11 +169,11 @@ Resources:
       Tags:
         - Key: Name
           Value: !Sub "${AudioProcessingStateMachineName}-${Environment}"
-      LoggingConfiguration:
-        Level: ALL
-        Destinations:
-          - CloudWatchLogsLogGroup:
-              LogGroupArn: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/vendedlogs/states/${AudioProcessingStateMachineName}-${Environment}/*"
+      #LoggingConfiguration:
+      #  Level: ALL
+      #  Destinations:
+      #    - CloudWatchLogsLogGroup:
+      #        LogGroupArn: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/vendedlogs/states/${AudioProcessingStateMachineName}-${Environment}/*"
 
   StepFunctionsRole:
     Type: AWS::IAM::Role
@@ -202,7 +202,6 @@ Resources:
                   - !GetAtt TranslateFunction.Arn
                   - !GetAtt SynthesizeFunction.Arn
                   - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/vendedlogs/states/${AudioProcessingStateMachineName}-${Environment}/*'
-                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/vendedlogs/states/*'
       Tags:
         - Key: Name
           Value: !Sub "${StepFunctionsRoleName}-${Environment}"
