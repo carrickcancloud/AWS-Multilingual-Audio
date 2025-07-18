@@ -27,6 +27,16 @@ jobs:
             exit 1
           fi
 
+      - name: Check for audio files
+        id: check_audio_files
+        run: |
+          if [ -z "$(ls -A audio_inputs/*.mp3 2>/dev/null)" ]; then
+            echo "No audio files found in audio_inputs/ directory. Exiting."
+            exit 0  # Exit gracefully if no files are found
+          else
+            echo "Audio files found. Proceeding with upload."
+          fi
+
       - name: Upload audio files to S3
         run: |
           BUCKET_NAME=${{ env.BUCKET_NAME }}
