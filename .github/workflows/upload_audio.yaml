@@ -37,10 +37,12 @@ jobs:
             echo "Audio files found. Proceeding with upload."
           fi
 
+      - name: Debug Bucket Name
+        run: echo "Using bucket: ${{ env.BUCKET_NAME }}"
+
       - name: Upload audio files to S3
         run: |
           BUCKET_NAME=${{ env.BUCKET_NAME }}
-          
           # Uploading only .mp3 files to the S3 bucket
           aws s3 sync audio_inputs/ s3://$BUCKET_NAME/audio_inputs/ --exclude "*" --include "*.mp3"
           echo "Uploaded all .mp3 audio packages to s3://$BUCKET_NAME/audio_inputs/"
