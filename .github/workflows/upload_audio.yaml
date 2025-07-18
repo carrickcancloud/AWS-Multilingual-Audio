@@ -38,7 +38,8 @@ jobs:
           fi
 
       - name: Debug Bucket Name
-        run: echo "Using bucket: ${{ env.BUCKET_NAME }}"
+        run: |
+          echo "Using bucket: ${{ env.BUCKET_NAME }}"
 
       - name: Upload audio files to S3
         run: |
