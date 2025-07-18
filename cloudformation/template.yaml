@@ -222,9 +222,15 @@ Resources:
                   - transcribe:GetTranscriptionJob
                   - translate:TranslateText
                   - polly:SynthesizeSpeech
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
                 Resource:
                   - !Sub 'arn:aws:s3:::${AudioBucket}/audio_inputs/*'
                   - !Sub 'arn:aws:s3:::${AudioBucket}'
+                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${TranscribeFunctionName}-${Environment}'
+                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${TranslateFunctionName}-${Environment}'
+                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${SynthesizeFunctionName}-${Environment}'
       Tags:
         - Key: Name
           Value: !Sub "${LambdaExecutionRoleName}-${Environment}"
