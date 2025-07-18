@@ -35,11 +35,6 @@ jobs:
             echo "Audio files found. Proceeding with upload."
           fi
 
-      - name: Debug Environment Variables
-        run: |
-          echo "Bucket Name: ${{ secrets.S3_BUCKET_BETA }}"
-          echo "AWS Region: ${{ secrets.AWS_REGION }}"
-
       - name: Check if S3 bucket exists
         run: |
           BUCKET_NAME=${{ env.BUCKET_NAME }}
