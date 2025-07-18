@@ -1,7 +1,7 @@
 name: Destroy Resources
 
 on:
-  workflow_dispatch:  # Enable manual trigger
+  workflow_dispatch:
     inputs:
       environment:
         description: 'Select environment to destroy: beta or prod.'
@@ -18,16 +18,17 @@ jobs:
       - name: Check if CloudFormation stack exists
         id: check_stack
         run: |
-          # Construct the stack name based on the selected environment
-          STACK_NAME="AcmeLabsSpeakEasy-${{ github.event.inputs.environment }}"
-          echo "STACK_NAME=$STACK_NAME" >> $GITHUB_ENV  # Export STACK_NAME as an environment variable
+          # Construct the tag value based on the selected environment
+          TAG_NAME="AcmeLabsSpeakEasy-${{ github.event.inputs.environment }}"
           
-          # Check if the stack exists
-          if aws cloudformation describe-stacks --stack-name "$STACK_NAME" 2>/dev/null; then
+          # List stacks and filter by tag
+          STACK_NAME=$(aws cloudformation list-stacks --query "StackSummaries[?contains(Tags[*].Key, 'Name') && contains(Tags[*].Value, '$TAG_NAME')].StackName" --output text)
+
+          if [ -n "$STACK_NAME" ]; then
             echo "Stack $STACK_NAME exists. Proceeding to deletion."
             echo "DEPLOY_STACK=true" >> $GITHUB_ENV
           else
-            echo "Stack $STACK_NAME does not exist. Skipping deletion."
+            echo "No stack found with the tag $TAG_NAME. Skipping deletion."
             echo "Exiting the workflow."
             exit 1  # Exit with an error code
           fi
@@ -39,8 +40,7 @@ jobs:
       - name: Delete CloudFormation stack
         if: env.DEPLOY_STACK == 'true'
         run: |
-          # Use the constructed stack name to delete the stack
-          STACK_NAME="AcmeLabsSpeakEasy-${{ github.event.inputs.environment }}"
+          # Use the extracted stack name to delete the stack
           aws cloudformation delete-stack --stack-name "$STACK_NAME"
           echo "Stack $STACK_NAME is being deleted."
         env:

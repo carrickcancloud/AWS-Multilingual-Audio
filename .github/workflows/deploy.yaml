@@ -103,6 +103,7 @@ jobs:
               --template-body file://cloudformation/template.yaml \
               --parameters ParameterKey=Environment,ParameterValue="$ENVIRONMENT" \
               --capabilities CAPABILITY_NAMED_IAM
+              --tags Key=Name,Value="$STACK_NAME"
             
             # Wait for the stack creation to complete
             aws cloudformation wait stack-create-complete --stack-name "$STACK_NAME"
@@ -113,6 +114,7 @@ jobs:
               --template-body file://cloudformation/template.yaml \
               --parameters ParameterKey=Environment,ParameterValue="$ENVIRONMENT" \
               --capabilities CAPABILITY_NAMED_IAM
+              --tags Key=Name,Value="$STACK_NAME"
             
             # Wait for the stack update to complete
             aws cloudformation wait stack-update-complete --stack-name "$STACK_NAME"
