@@ -35,10 +35,6 @@ jobs:
             echo "Audio files found. Proceeding with upload."
           fi
 
-      - name: Debug Bucket Name
-        run: |
-          echo "Using bucket: $BUCKET_NAME"
-
       - name: Check if S3 bucket exists
         run: |
           BUCKET_NAME=${{ env.BUCKET_NAME }}
