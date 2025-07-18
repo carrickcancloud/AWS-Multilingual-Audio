@@ -31,6 +31,9 @@ jobs:
           # List stacks and filter by tag in the shell
           STACKS=$(aws cloudformation list-stacks --output json)
           STACK_NAME=$(echo "$STACKS" | jq -r --arg TAG_NAME "$TAG_NAME" '.StackSummaries[] | select(.Tags[]? | .Key == "Name" and .Value == $TAG_NAME) | .StackName')
+          
+          echo "Stack Name: $STACK_NAME"
+          echo "TAG_NAME: $TAG_NAME"
       
           if [ -n "$STACK_NAME" ]; then
             echo "Stack $STACK_NAME exists. Proceeding to deletion."
