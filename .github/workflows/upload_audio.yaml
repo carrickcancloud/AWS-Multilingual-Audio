@@ -14,7 +14,6 @@ jobs:
         uses: actions/checkout@v4.2.0
 
       - name: Set Bucket Name
-        id: set_bucket_name
         run: |
           if [ "${{ github.ref }}" == "refs/heads/beta" ]; then
             echo "BUCKET_NAME=${{ secrets.S3_BUCKET_BETA }}" >> $GITHUB_ENV
@@ -28,7 +27,6 @@ jobs:
           fi
 
       - name: Check for audio files
-        id: check_audio_files
         run: |
           if [ -z "$(ls -A audio_inputs/*.mp3 2>/dev/null)" ]; then
             echo "No audio files found in audio_inputs/ directory. Exiting."
@@ -42,16 +40,20 @@ jobs:
           echo "Using bucket: $BUCKET_NAME"
 
       - name: Check if S3 bucket exists
-        id: check_bucket
         run: |
           BUCKET_NAME=${{ env.BUCKET_NAME }}
-          echo "Bucket name is: $BUCKET_NAME"
-          if aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
-            echo "Bucket $BUCKET_NAME exists. Proceeding to upload."
+          echo "Checking existence for bucket."  # Do not reveal the actual bucket name
+          if aws s3api head-bucket --bucket "$BUCKET_NAME" --region ${{ secrets.AWS_REGION }}; then
+            echo "Bucket exists. Proceeding to upload."
           else
-            echo "Error: Bucket $BUCKET_NAME does not exist."
+            echo "Error: Bucket does not exist or access is denied."
             exit 1  # Exit with an error if the bucket does not exist
           fi
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+
 
       - name: Upload audio files to S3
         run: |
