@@ -15,46 +15,22 @@ jobs:
   undeploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Install Operating System Updates & jq package
+      - name: Delete CloudFormation Stack
         run: |
-          sudo apt-get update -y 
-          sudo apt-get upgrade -y
-          sudo apt-get autoremove -y
-          sudo apt-get install jq -y
+          # Construct the prefix based on the selected environment
+          PREFIX="AcmeLabsSpeakEasy-${{ github.event.inputs.environment }}"
+          
+          # Find the stack name that starts with the known prefix
+          STACK_NAME=$(aws cloudformation list-stacks --query "StackSummaries[?starts_with(StackName, '$PREFIX')].StackName" --output text)
 
-      - name: Check if CloudFormation stack exists
-        id: check_stack
-        run: |
-          # Construct the tag value based on the selected environment
-          TAG_NAME="AcmeLabsSpeakEasy-${{ github.event.inputs.environment }}"
-          
-          # List stacks and filter by tag in the shell
-          STACKS=$(aws cloudformation list-stacks --output json)
-          STACK_NAME=$(echo "$STACKS" | jq -r --arg TAG_NAME "$TAG_NAME" '.StackSummaries[] | select(.Tags[]? | .Key == "Name" and .Value == $TAG_NAME) | .StackName')
-          
-          echo "Stack Name: $STACK_NAME"
-          echo "TAG_NAME: $TAG_NAME"
-      
+          # Check if a stack was found and delete it
           if [ -n "$STACK_NAME" ]; then
-            echo "Stack $STACK_NAME exists. Proceeding to deletion."
-            echo "DEPLOY_STACK=true" >> $GITHUB_ENV
+            echo "Deleting stack: $STACK_NAME"
+            aws cloudformation delete-stack --stack-name "$STACK_NAME"
+            echo "Stack $STACK_NAME is being deleted."
           else
-            echo "No stack found with the tag $TAG_NAME. Skipping deletion."
-            echo "Exiting the workflow."
-            exit 1  # Exit with an error code
+            echo "No stack found with the prefix $PREFIX. Skipping deletion."
           fi
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-
-
-      - name: Delete CloudFormation stack
-        if: env.DEPLOY_STACK == 'true'
-        run: |
-          # Use the extracted stack name to delete the stack
-          aws cloudformation delete-stack --stack-name "$STACK_NAME"
-          echo "Stack $STACK_NAME is being deleted."
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
