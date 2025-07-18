@@ -10,13 +10,14 @@ logger.setLevel(logging.INFO)
 translate = boto3.client('translate')
 s3 = boto3.client('s3')
 
-
 def lambda_handler(event, context):
+    logger.info("Translate function invoked")
     transcript_uri = event['transcript_uri']
     target_language = os.environ['TARGET_LANGUAGE']
 
     try:
-        # Retrieve the transcript text from S3 (implement this)
+        logger.info(f"Retrieving transcript text from {transcript_uri}")
+        # Implement actual retrieval logic here
         transcript_text = "Sample transcript text"  # Replace with actual retrieval logic
 
         logger.info(f"Translating text to {target_language}")
