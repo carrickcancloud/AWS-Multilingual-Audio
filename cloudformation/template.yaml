@@ -194,10 +194,14 @@ Resources:
               - Effect: Allow
                 Action:
                   - lambda:InvokeFunction
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
                 Resource:
                   - !GetAtt TranscribeFunction.Arn
                   - !GetAtt TranslateFunction.Arn
                   - !GetAtt SynthesizeFunction.Arn
+                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/vendedlogs/states/${AudioProcessingStateMachineName}-${Environment}'
       Tags:
         - Key: Name
           Value: !Sub "${StepFunctionsRoleName}-${Environment}"
