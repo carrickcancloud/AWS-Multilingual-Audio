@@ -35,7 +35,6 @@ jobs:
           python-version: '3.13.5'
 
       - name: Check if S3 bucket exists
-        id: check_bucket
         run: |
           BUCKET_NAME=${{ secrets.S3_BUCKET_LAMBDAS }}
           if aws s3api head-bucket --bucket $BUCKET_NAME 2>/dev/null; then
@@ -76,7 +75,6 @@ jobs:
           AWS_REGION: ${{ secrets.AWS_REGION }}
 
       - name: Check if CloudFormation stack exists
-        id: check_stack
         run: |
           STACK_NAME="AcmeLabsSpeakEasy-${{ github.event.inputs.environment }}"
           echo "STACK_NAME=$STACK_NAME" >> $GITHUB_ENV  # Export STACK_NAME as an environment variable
