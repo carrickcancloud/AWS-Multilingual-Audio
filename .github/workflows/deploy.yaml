@@ -6,12 +6,14 @@ on:
       action:
         description: 'Select action to perform: deploy or update. Deploy will create a new stack, while update will modify an existing stack.'
         required: true
+        type: choice
         options:
           - deploy
           - update
       environment:
         description: 'Select environment to deploy: beta or prod.'
         required: true
+        type: choice
         options:
           - beta
           - prod

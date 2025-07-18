@@ -6,6 +6,7 @@ on:
       environment:
         description: 'Select environment to destroy: beta or prod.'
         required: true
+        type: choice
         options:
           - beta
           - prod
