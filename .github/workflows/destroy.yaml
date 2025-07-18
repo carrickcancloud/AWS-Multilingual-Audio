@@ -15,21 +15,21 @@ jobs:
   undeploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Delete CloudFormation Stack
+      - name: Check and Delete CloudFormation Stack
         run: |
-          # Construct the prefix based on the selected environment
-          PREFIX="AcmeLabsSpeakEasy-${{ github.event.inputs.environment }}"
+          # Construct the stack name based on the selected environment
+          STACK_NAME="AcmeLabsSpeakEasy-${{ github.event.inputs.environment }}"
           
-          # Find the stack name that starts with the known prefix
-          STACK_NAME=$(aws cloudformation list-stacks --query "StackSummaries[?starts_with(StackName, '$PREFIX')].StackName" --output text)
+          echo "Checking if stack exists: $STACK_NAME"
 
-          # Check if a stack was found and delete it
-          if [ -n "$STACK_NAME" ]; then
-            echo "Deleting stack: $STACK_NAME"
+          # Check if the stack exists
+          if aws cloudformation list-stacks --query "StackSummaries[?StackStatus=='CREATE_COMPLETE' || StackStatus=='UPDATE_COMPLETE' && starts_with(StackName, '$STACK_NAME')].StackName" --output text | grep -q "$STACK_NAME"; then
+            echo "Stack $STACK_NAME exists. Proceeding to deletion."
+            # Delete the stack
             aws cloudformation delete-stack --stack-name "$STACK_NAME"
             echo "Stack $STACK_NAME is being deleted."
           else
-            echo "No stack found with the prefix $PREFIX. Skipping deletion."
+            echo "No stack found with the name $STACK_NAME. Skipping deletion."
           fi
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
