@@ -25,9 +25,15 @@ jobs:
           # Check if the stack exists
           if aws cloudformation list-stacks --query "StackSummaries[?StackStatus=='CREATE_COMPLETE' || StackStatus=='UPDATE_COMPLETE' && starts_with(StackName, '$STACK_NAME')].StackName" --output text | grep -q "$STACK_NAME"; then
             echo "Stack $STACK_NAME exists. Proceeding to deletion."
+          
             # Delete the stack
             aws cloudformation delete-stack --stack-name "$STACK_NAME"
             echo "Stack $STACK_NAME is being deleted."
+
+            # Check the status of the stack deletion
+            echo "Waiting for stack deletion to complete..."
+            aws cloudformation wait stack-delete-complete --stack-name "$STACK_NAME"
+            echo "Stack $STACK_NAME has been successfully deleted."
           else
             echo "No stack found with the name $STACK_NAME. Skipping deletion."
           fi
