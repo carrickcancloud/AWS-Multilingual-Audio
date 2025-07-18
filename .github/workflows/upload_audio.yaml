@@ -50,7 +50,6 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
 
-
       - name: Upload audio files to S3
         run: |
           BUCKET_NAME=${{ env.BUCKET_NAME }}
