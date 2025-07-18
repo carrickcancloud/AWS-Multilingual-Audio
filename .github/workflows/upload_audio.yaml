@@ -37,9 +37,16 @@ jobs:
             echo "Audio files found. Proceeding with upload."
           fi
 
-      - name: Debug Bucket Name
+      - name: Check if S3 bucket exists
+        id: check_bucket
         run: |
-          echo "Using bucket: ${{ env.BUCKET_NAME }}"
+          BUCKET_NAME=${{ env.BUCKET_NAME }}
+          if aws s3api head-bucket --bucket "$BUCKET_NAME" 2>/dev/null; then
+            echo "Bucket $BUCKET_NAME exists. Proceeding to upload."
+          else
+            echo "Error: Bucket $BUCKET_NAME does not exist."
+            exit 1  # Exit with an error if the bucket does not exist
+          fi
 
       - name: Upload audio files to S3
         run: |
