@@ -138,7 +138,7 @@ jobs:
             echo "Error: Invalid environment selected."
             exit 1
           fi
-      
+        
           # Set up the event notification for the S3 bucket
           aws s3api put-bucket-notification-configuration --bucket $BUCKET_NAME --notification-configuration '{
             "LambdaFunctionConfigurations": [
@@ -148,6 +148,10 @@ jobs:
                 "Filter": {
                   "Key": {
                     "FilterRules": [
+                      {
+                        "Name": "prefix",
+                        "Value": "audio_inputs/"
+                      },
                       {
                         "Name": "suffix",
                         "Value": ".mp3"
