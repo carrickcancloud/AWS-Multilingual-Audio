@@ -10,8 +10,8 @@ logger.setLevel(logging.INFO)
 s3 = boto3.client('s3')
 polly = boto3.client('polly')
 
-
 def lambda_handler(event, context):
+    logger.info("Synthesize function invoked")
     translated_text = event['translated_text']
     bucket = event['bucket']
     target_language = os.environ['TARGET_LANGUAGE']
@@ -21,8 +21,6 @@ def lambda_handler(event, context):
         response = polly.synthesize_speech(Text=translated_text, OutputFormat='mp3', VoiceId='Joanna')
 
         audio_uri = f's3://{bucket}/audio_outputs/{event["key"].split(".")[0]}_{target_language}.mp3'
-
-        # Save audio to S3
         s3.put_object(Bucket=bucket, Key=audio_uri, Body=response['AudioStream'].read())
         logger.info(f"Synthesized speech saved to: {audio_uri}")
 
