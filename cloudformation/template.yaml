@@ -114,7 +114,8 @@ Resources:
         S3Key: !Ref UploadTriggerFunctionS3Key
       Runtime: python3.13
       Environment:
-        STATE_MACHINE_ARN: !GetAtt AudioProcessingStateMachine.Arn
+        Variables:
+          STATE_MACHINE_ARN: !GetAtt AudioProcessingStateMachine.Arn
       Tags:
         - Key: Name
           Value: !Sub "${UploadTriggerFunctionName}-${Environment}"
