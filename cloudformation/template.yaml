@@ -276,7 +276,7 @@ Resources:
                   - transcribe:StartTranscriptionJob
                   - transcribe:GetTranscriptionJob
                 Resource:
-                  - !Sub '*'
+                  - '*'
       Tags:
         - Key: Name
           Value: !Sub "${LambdaExecutionRoleName}-${Environment}"
