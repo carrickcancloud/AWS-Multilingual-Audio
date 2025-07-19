@@ -128,10 +128,10 @@ jobs:
           # Determine the bucket name based on the selected environment
           if [ "${{ github.event.inputs.environment }}" == "beta" ]; then
             BUCKET_NAME=${{ secrets.S3_BUCKET_BETA }}
-            FUNCTION_NAME="acmelabs-speakeasy-transcribe-beta"
+            FUNCTION_NAME="acmelabs-speakeasy-upload-beta"
           elif [ "${{ github.event.inputs.environment }}" == "prod" ]; then
             BUCKET_NAME=${{ secrets.S3_BUCKET_PROD }}
-            FUNCTION_NAME="acmelabs-speakeasy-transcribe-prod"
+            FUNCTION_NAME="acmelabs-speakeasy-upload-prod"
           else
             echo "Error: Invalid environment selected."
             exit 1
@@ -159,7 +159,10 @@ jobs:
                 }
               }
             ]
-          }'
+          }' || {
+            echo "Failed to set up S3 event notification."
+            exit 1
+          }
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
