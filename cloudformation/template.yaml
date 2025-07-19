@@ -349,13 +349,12 @@ Resources:
       StateMachineName: !Sub "${AudioProcessingStateMachineName}-${Environment}"
       Tags:
         - Key: Name
-          Value: !Sub ```yaml
           Value: !Sub "${AudioProcessingStateMachineName}-${Environment}"
-      #LoggingConfiguration:
-      #  Level: ALL
-      #  Destinations:
-      #    - CloudWatchLogsLogGroup:
-      #        LogGroupArn: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/vendedlogs/states/${AudioProcessingStateMachineName}-${Environment}/*"
+      LoggingConfiguration:
+        Level: ALL
+        Destinations:
+          - CloudWatchLogsLogGroup:
+              LogGroupArn: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/vendedlogs/states/${AudioProcessingStateMachineName}-${Environment}/*"
 
   StepFunctionsRole:
     Type: AWS::IAM::Role
