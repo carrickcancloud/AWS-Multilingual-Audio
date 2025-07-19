@@ -379,17 +379,14 @@ Resources:
                   - logs:CreateLogStream
                   - logs:PutLogEvents
                 Resource:
-                  - !GetAtt TranscribeFunction.Arn
-                  - !GetAtt TranslateFunction.Arn
-                  - !GetAtt SynthesizeFunction.Arn
                   - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/vendedlogs/states/${AudioProcessingStateMachineName}-${Environment}/*'
-                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${TranscribeFunctionName}-${Environment}'
-                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${TranscribeStatusFunctionName}-${Environment}'
-                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${TranslateFunctionName}-${Environment}'
-                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${TranslateStatusFunctionName}-${Environment}'
-                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${SynthesizeFunctionName}-${Environment}'
-                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${SynthesizeStatusFunctionName}-${Environment}'
-                  - !Sub 'arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${AudioProcessingStateMachineName}-${Environment}'
+                  - !GetAtt TranscribeFunction.Arn
+                  - !GetAtt TranscribeStatusFunction.Arn
+                  - !GetAtt TranslateFunction.Arn
+                  - !GetAtt TranslateStatusFunction.Arn
+                  - !GetAtt SynthesizeFunction.Arn
+                  - !GetAtt SynthesizeStatusFunction.Arn
+                  - !GetAtt AudioProcessingStateMachine.Arn
       Tags:
         - Key: Name
           Value: !Sub "${StepFunctionsRoleName}-${Environment}"
@@ -424,16 +421,16 @@ Resources:
                   - logs:PutLogEvents
                   - states:StartExecution
                 Resource:
+                  - !GetAtt AudioBucket.Arn
                   - !Sub 'arn:aws:s3:::${AudioBucket}/audio_inputs/*'
-                  - !Sub 'arn:aws:s3:::${AudioBucket}'
-                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${TriggerFunctionName}-${Environment}'
-                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${TranscribeFunctionName}-${Environment}'
-                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${TranscribeStatusFunctionName}-${Environment}'
-                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${TranslateFunctionName}-${Environment}'
-                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${TranslateStatusFunctionName}-${Environment}'
-                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${SynthesizeFunctionName}-${Environment}'
-                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${SynthesizeStatusFunctionName}-${Environment}'
-                  - !Sub 'arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${AudioProcessingStateMachineName}-${Environment}'
+                  - !GetAtt TriggerFunction.Arn
+                  - !GetAtt TranscribeFunction.Arn
+                  - !GetAtt TranscribeStatusFunction.Arn
+                  - !GetAtt TranslateFunction.Arn
+                  - !GetAtt TranslateStatusFunction.Arn
+                  - !GetAtt SynthesizeFunction.Arn
+                  - !GetAtt SynthesizeStatusFunction.Arn
+                  - !GetAtt AudioProcessingStateMachine.Arn
         #- PolicyName: TranscribeExecutionPolicy
         #  PolicyDocument:
         #    Version: '2012-10-17'
@@ -460,6 +457,10 @@ Outputs:
   AudioBucketName:
     Value: !Ref AudioBucket
     Description: Name of the audio S3 bucket
+
+  TriggerFunctionArn:
+    Value: !GetAtt TriggerFunction.Arn
+    Description: ARN of the Upload Trigger Lambda function
 
   TranscribeFunctionArn:
     Value: !GetAtt TranscribeFunction.Arn
