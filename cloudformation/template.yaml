@@ -29,14 +29,29 @@ Parameters:
     Default: acmelabs-speakeasy-transcribe
     Description: The name of the Transcribe Lambda function
 
+  TranscribeStatusFunctionName:
+    Type: String
+    Default: acmelabs-speakeasy-transcription-status
+    Description: The name of the Transcribe Lambda function
+
   TranslateFunctionName:
     Type: String
     Default: acmelabs-speakeasy-translate
     Description: The name of the Translate Lambda function
 
+  TranslateStatusFunctionName:
+    Type: String
+    Default: acmelabs-speakeasy-translation-status
+    Description: The name of the Translate Lambda function
+
   SynthesizeFunctionName:
     Type: String
     Default: acmelabs-speakeasy-synthesize
+    Description: The name of the Synthesize Lambda function
+
+  SynthesizeStatusFunctionName:
+    Type: String
+    Default: acmelabs-speakeasy-synthesis-status
     Description: The name of the Synthesize Lambda function
 
   TriggerFunctionS3Key:
@@ -49,14 +64,29 @@ Parameters:
     Default: speakeasy/transcribe.zip
     Description: The prefix for the Lambda function code files in the S3 bucket
 
+  TranscribeStatusFunctionS3Key:
+    Type: String
+    Default: speakeasy/status_transcription.zip
+    Description: The prefix for the Lambda function code files in the S3 bucket
+
   TranslateFunctionS3Key:
     Type: String
     Default: speakeasy/translate.zip
     Description: The prefix for the Lambda function code files in the S3 bucket
 
+  TranslateStatusFunctionS3Key:
+    Type: String
+    Default: speakeasy/status_translation.zip
+    Description: The prefix for the Lambda function code files in the S3 bucket
+
   SynthesizeFunctionS3Key:
     Type: String
     Default: speakeasy/synthesize.zip
+    Description: The prefix for the Lambda function code files in the S3 bucket
+
+  SynthesizeStatusFunctionS3Key:
+    Type: String
+    Default: speakeasy/status_synthesis.zip
     Description: The prefix for the Lambda function code files in the S3 bucket
 
   AudioProcessingStateMachineName:
@@ -142,6 +172,23 @@ Resources:
         - Key: Name
           Value: !Sub "${TranscribeFunctionName}-${Environment}"
 
+  TranscribeStatusFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${TranscribeStatusFunctionName}-${Environment}"
+      Handler: !Ref TranscribeHandler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref LambdaCodeBucket
+        S3Key: !Ref TranscribeStatusFunctionS3Key
+      Runtime: python3.13
+      Environment:
+        Variables:
+          S3_BUCKET: !Sub ${AudioBucketName}-${Environment}
+      Tags:
+        - Key: Name
+          Value: !Sub "${TranscribeStatusFunctionName}-${Environment}"
+
   TranslateFunction:
     Type: AWS::Lambda::Function
     Properties:
@@ -160,6 +207,23 @@ Resources:
         - Key: Name
           Value: !Sub "${TranslateFunctionName}-${Environment}"
 
+  TranslateStatusFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${TranslateStatusFunctionName}-${Environment}"
+      Handler: !Ref TranslateHandler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref LambdaCodeBucket
+        S3Key: !Ref TranslateStatusFunctionS3Key
+      Runtime: python3.13
+      Environment:
+        Variables:
+          S3_BUCKET: !Sub ${AudioBucketName}-${Environment}
+      Tags:
+        - Key: Name
+          Value: !Sub "${TranslateStatusFunctionName}-${Environment}"
+
   SynthesizeFunction:
     Type: AWS::Lambda::Function
     Properties:
@@ -177,6 +241,23 @@ Resources:
         - Key: Name
           Value: !Sub "${SynthesizeFunctionName}-${Environment}"
 
+  SynthesizeStatusFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${SynthesizeStatusFunctionName}-${Environment}"
+      Handler: !Ref SynthesizeHandler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref LambdaCodeBucket
+        S3Key: !Ref SynthesizeStatusFunctionS3Key
+      Runtime: python3.13
+      Environment:
+        Variables:
+          S3_BUCKET: !Sub ${AudioBucketName}-${Environment}
+      Tags:
+        - Key: Name
+          Value: !Sub "${SynthesizeStatusFunctionName}-${Environment}"
+
   AudioProcessingStateMachine:
     Type: AWS::StepFunctions::StateMachine
     Properties:
@@ -187,19 +268,88 @@ Resources:
           TranscribeAudio:
             Type: Task
             Resource: !Sub "${TranscribeFunction.Arn}"
-            Next: "TranslateText"
+            Next: "WaitForTranscription"
+          WaitForTranscription:
+            Type: Wait
+            Seconds: 5
+            Next: "CheckTranscriptionStatus"
+          CheckTranscriptionStatus:
+            Type: Task
+            Resource: !Sub "${TranscribeStatusFunction.Arn}"
+            Next: "IsTranscriptionComplete"
+          IsTranscriptionComplete:
+            Type: Choice
+            Choices:
+              - Variable: "$.status"
+                StringEquals: "COMPLETED"
+                Next: "TranslateText"
+              - Variable: "$.status"
+                StringEquals: "FAILED"
+                Next: "HandleFailure"
+            Default: "WaitForTranscription"
           TranslateText:
             Type: Task
             Resource: !Sub "${TranslateFunction.Arn}"
-            Next: "SynthesizeSpeech"
+            Next: "WaitForTranslation"
+          WaitForTranslation:
+            Type: Wait
+            Seconds: 5
+            Next: "CheckTranslationStatus"
+          CheckTranslationStatus:
+            Type: Task
+            Resource: !Sub "${TranslateStatusFunction.Arn}"
+            Next: "IsTranslationComplete"
+          IsTranslationComplete:
+            Type: Choice
+            Choices:
+              - Variable: "$.status"
+                StringEquals: "COMPLETED"
+                Next: "SynthesizeSpeech"
+              - Variable: "$.status"
+                StringEquals: "FAILED"
+                Next: "HandleTranslationFailure"
+            Default: "WaitForTranslation"
           SynthesizeSpeech:
             Type: Task
             Resource: !Sub "${SynthesizeFunction.Arn}"
-            End: true
+            Next: "WaitForSynthesis"
+          WaitForSynthesis:
+            Type: Wait
+            Seconds: 5
+            Next: "CheckSynthesisStatus"
+          CheckSynthesisStatus:
+            Type: Task
+            Resource: !Sub "${SynthesizeStatusFunction.Arn}"
+            Next: "IsSynthesisComplete"
+          IsSynthesisComplete:
+            Type: Choice
+            Choices:
+              - Variable: "$.status"
+                StringEquals: "COMPLETED"
+                Next: "Success"
+              - Variable: "$.status"
+                StringEquals: "FAILED"
+                Next: "HandleSynthesisFailure"
+            Default: "WaitForSynthesis"
+          Success:
+            Type: Succeed
+          HandleFailure:
+            Type: Fail
+            Error: "TranscriptionFailed"
+            Cause: "The transcription job has failed."
+          HandleTranslationFailure:
+            Type: Fail
+            Error: "TranslationFailed"
+            Cause: "The translation job has failed."
+          HandleSynthesisFailure:
+            Type: Fail
+            Error: "SynthesisFailed"
+            Cause: "The synthesis job has failed."
       RoleArn: !GetAtt StepFunctionsRole.Arn
       StateMachineName: !Sub "${AudioProcessingStateMachineName}-${Environment}"
       Tags:
         - Key: Name
+          Value: !Sub ```yaml
           Value: !Sub "${AudioProcessingStateMachineName}-${Environment}"
       #LoggingConfiguration:
       #  Level: ALL
@@ -272,19 +422,22 @@ Resources:
                   - !Sub 'arn:aws:s3:::${AudioBucket}'
                   - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${TriggerFunctionName}-${Environment}'
                   - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${TranscribeFunctionName}-${Environment}'
+                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${TranscribeStatusFunctionName}-${Environment}'
                   - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${TranslateFunctionName}-${Environment}'
+                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${TranslateStatusFunctionName}-${Environment}'
                   - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${SynthesizeFunctionName}-${Environment}'
+                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${SynthesizeStatusFunctionName}-${Environment}'
                   - !Sub 'arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${AudioProcessingStateMachineName}-${Environment}'
-        - PolicyName: TranscribeExecutionPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - transcribe:StartTranscriptionJob
-                  - transcribe:GetTranscriptionJob
-                Resource:
-                  - '*'
+        #- PolicyName: TranscribeExecutionPolicy
+        #  PolicyDocument:
+        #    Version: '2012-10-17'
+        #    Statement:
+        #      - Effect: Allow
+        #        Action:
+        #          - transcribe:StartTranscriptionJob
+        #          - transcribe:GetTranscriptionJob
+        #        Resource:
+        #          - '*'
       Tags:
         - Key: Name
           Value: !Sub "${LambdaExecutionRoleName}-${Environment}"
@@ -306,13 +459,25 @@ Outputs:
     Value: !GetAtt TranscribeFunction.Arn
     Description: ARN of the Transcribe Lambda function
 
+  TranscribeStatusFunctionArn:
+    Value: !GetAtt TranscribeStatusFunction.Arn
+    Description: ARN of the Transcribe Status Lambda function
+
   TranslateFunctionArn:
     Value: !GetAtt TranslateFunction.Arn
     Description: ARN of the Translate Lambda function
 
+  TranslateStatusFunctionArn:
+    Value: !GetAtt TranslateStatusFunction.Arn
+    Description: ARN of the Translate Status Lambda function
+
   SynthesizeFunctionArn:
     Value: !GetAtt SynthesizeFunction.Arn
     Description: ARN of the Synthesize Lambda function
+
+  SynthesizeStatusFunctionArn:
+    Value: !GetAtt SynthesizeStatusFunction.Arn
+    Description: ARN of the Synthesize Status Lambda function
 
   StateMachineArn:
     Value: !GetAtt AudioProcessingStateMachine.Arn
