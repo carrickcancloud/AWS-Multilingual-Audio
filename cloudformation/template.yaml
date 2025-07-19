@@ -349,7 +349,6 @@ Resources:
       StateMachineName: !Sub "${AudioProcessingStateMachineName}-${Environment}"
       Tags:
         - Key: Name
-          Value: !Sub ```yaml
           Value: !Sub "${AudioProcessingStateMachineName}-${Environment}"
       #LoggingConfiguration:
       #  Level: ALL
