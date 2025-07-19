@@ -74,6 +74,11 @@ Parameters:
     Default: acmelabs-speakeasy-lambda-execution-role
     Description: The name of the Lambda Execution IAM role
 
+  TriggerHandler:
+    Type: String
+    Default: trigger.lambda_handler
+    Description: The handler for the Upload Trigger Lambda function
+
   TranscribeHandler:
     Type: String
     Default: transcribe.lambda_handler
@@ -107,7 +112,7 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: !Sub "${TriggerFunctionName}-${Environment}"
-      Handler: upload_trigger.lambda_handler
+      Handler: !Ref TriggerHandler
       Role: !GetAtt LambdaExecutionRole.Arn
       Code:
         S3Bucket: !Ref LambdaCodeBucket
