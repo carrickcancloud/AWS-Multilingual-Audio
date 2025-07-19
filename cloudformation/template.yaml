@@ -19,6 +19,11 @@ Parameters:
     Default: acmelabs-speakeasy
     Description: The name of the audio S3 bucket (e.g., acmelabs-speakeasy-${Environment})
 
+  UploadTriggerFunctionName:
+    Type: String
+    Default: acmelabs-speakeasy-upload
+    Description: The name of the Upload Trigger Lambda function
+
   TranscribeFunctionName:
     Type: String
     Default: acmelabs-speakeasy-transcribe
@@ -33,6 +38,11 @@ Parameters:
     Type: String
     Default: acmelabs-speakeasy-synthesize
     Description: The name of the Synthesize Lambda function
+
+  UploadTriggerFunctionS3Key:
+    Type: String
+    Default: speakeasy/upload_trigger.zip
+    Description: The prefix for the Upload Trigger Lambda function code files in the S3 bucket
 
   TranscribeFunctionS3Key:
     Type: String
@@ -92,6 +102,22 @@ Resources:
       Tags:
         - Key: Name
           Value: acmelabs-speakeasy-bucket
+
+  UploadTriggerFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub "${UploadTriggerFunctionName}-${Environment}"
+      Handler: upload_trigger.lambda_handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        S3Bucket: !Ref LambdaCodeBucket
+        S3Key: !Ref UploadTriggerFunctionS3Key
+      Runtime: python3.13
+      Environment:
+        STATE_MACHINE_ARN: !GetAtt AudioProcessingStateMachine.Arn
+      Tags:
+        - Key: Name
+          Value: !Sub "${UploadTriggerFunctionName}-${Environment}"
 
   TranscribeFunction:
     Type: AWS::Lambda::Function
@@ -237,9 +263,20 @@ Resources:
                 Resource:
                   - !Sub 'arn:aws:s3:::${AudioBucket}/audio_inputs/*'
                   - !Sub 'arn:aws:s3:::${AudioBucket}'
+                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${UploadTriggerFunctionName}-${Environment}'
                   - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${TranscribeFunctionName}-${Environment}'
                   - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${TranslateFunctionName}-${Environment}'
                   - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${SynthesizeFunctionName}-${Environment}'
+        - PolicyName: TranscribeExecutionPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - transcribe:StartTranscriptionJob
+                  - transcribe:GetTranscriptionJob
+                Resource:
+                  - !Sub '*'
       Tags:
         - Key: Name
           Value: !Sub "${LambdaExecutionRoleName}-${Environment}"
@@ -248,7 +285,7 @@ Resources:
     Type: AWS::Lambda::Permission
     Properties:
       Action: lambda:InvokeFunction
-      FunctionName: !Ref TranscribeFunction
+      FunctionName: !Ref UploadTriggerFunction
       Principal: s3.amazonaws.com
       SourceArn: !Sub 'arn:aws:s3:::${AudioBucket}'
 
