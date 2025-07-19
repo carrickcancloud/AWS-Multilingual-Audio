@@ -129,10 +129,10 @@ jobs:
           # Determine the bucket name based on the selected environment
           if [ "${{ github.event.inputs.environment }}" == "beta" ]; then
             BUCKET_NAME=${{ secrets.S3_BUCKET_BETA }}
-            FUNCTION_NAME="acmelabs-speakeasy-upload-beta"
+            FUNCTION_NAME="acmelabs-speakeasy-trigger-beta"
           elif [ "${{ github.event.inputs.environment }}" == "prod" ]; then
             BUCKET_NAME=${{ secrets.S3_BUCKET_PROD }}
-            FUNCTION_NAME="acmelabs-speakeasy-upload-prod"
+            FUNCTION_NAME="acmelabs-speakeasy-trigger-prod"
           else
             echo "Error: Invalid environment selected."
             exit 1
