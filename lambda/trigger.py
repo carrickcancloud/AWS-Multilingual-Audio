@@ -2,7 +2,7 @@ import json
 import boto3
 import os
 import logging
-from datetime import datetime
+from typing import Any, Dict
 
 # Set up logging
 logger = logging.getLogger()
@@ -11,27 +11,32 @@ logger.setLevel(logging.INFO)
 # Initialize Boto3 clients
 stepfunctions = boto3.client('stepfunctions')
 
-def lambda_handler(event, context):
+def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+    """
+    AWS Lambda function handler to start a Step Functions execution based on S3 event.
+
+    Args:
+        event (Dict[str, Any]): The event data from S3.
+        context (Any): The runtime information of the Lambda function.
+
+    Returns:
+        Dict[str, Any]: A response dictionary with status code and message.
+    """
     logger.info("Received event: %s", json.dumps(event))
 
     # Extract bucket and key from the event
     bucket = event['Records'][0]['s3']['bucket']['name']
     key = event['Records'][0]['s3']['object']['key']
 
-    # Generate a unique filename by appending date, time, and milliseconds
-    base_name, extension = os.path.splitext(key)
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S.%f")[:-3]
-    unique_key = f"{base_name}_{timestamp}{extension}"
-
-    logger.info("Starting Step Functions execution for bucket: %s, key: %s", bucket, unique_key)
+    logger.info("Starting Step Functions execution for bucket: %s, key: %s", bucket, key)
 
     try:
-        # Start the Step Functions execution with target languages
+        # Start the Step Functions execution
         response = stepfunctions.start_execution(
             stateMachineArn=os.environ['STATE_MACHINE_ARN'],
             input=json.dumps({
                 'bucket': bucket,
-                'key': unique_key,
+                'key': key,
                 'target_languages': ['es', 'fr', 'de']
             })
         )
@@ -44,4 +49,7 @@ def lambda_handler(event, context):
         }
     except Exception as e:
         logger.error("Error starting Step Functions execution: %s", e)
-        raise e
+        return {
+            'statusCode': 500,
+            'body': json.dumps(f'Error starting Step Function execution: {str(e)}')
+        }
