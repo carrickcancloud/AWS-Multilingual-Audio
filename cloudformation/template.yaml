@@ -266,6 +266,7 @@ Resources:
                   - logs:CreateLogGroup
                   - logs:CreateLogStream
                   - logs:PutLogEvents
+                  - states:StartExecution
                 Resource:
                   - !Sub 'arn:aws:s3:::${AudioBucket}/audio_inputs/*'
                   - !Sub 'arn:aws:s3:::${AudioBucket}'
@@ -273,6 +274,7 @@ Resources:
                   - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${TranscribeFunctionName}-${Environment}'
                   - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${TranslateFunctionName}-${Environment}'
                   - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${SynthesizeFunctionName}-${Environment}'
+                  - !Sub 'arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${AudioProcessingStateMachineName}-${Environment}'
         - PolicyName: TranscribeExecutionPolicy
           PolicyDocument:
             Version: '2012-10-17'
