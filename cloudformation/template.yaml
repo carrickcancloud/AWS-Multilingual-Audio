@@ -383,6 +383,13 @@ Resources:
                   - !GetAtt TranslateFunction.Arn
                   - !GetAtt SynthesizeFunction.Arn
                   - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/vendedlogs/states/${AudioProcessingStateMachineName}-${Environment}/*'
+                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${TranscribeFunctionName}-${Environment}'
+                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${TranscribeStatusFunctionName}-${Environment}'
+                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${TranslateFunctionName}-${Environment}'
+                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${TranslateStatusFunctionName}-${Environment}'
+                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${SynthesizeFunctionName}-${Environment}'
+                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/lambda/${SynthesizeStatusFunctionName}-${Environment}'
+                  - !Sub 'arn:aws:states:${AWS::Region}:${AWS::AccountId}:stateMachine:${AudioProcessingStateMachineName}-${Environment}'
       Tags:
         - Key: Name
           Value: !Sub "${StepFunctionsRoleName}-${Environment}"
